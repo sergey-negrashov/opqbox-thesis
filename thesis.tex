@@ -51,7 +51,7 @@
 %%                   is omitted.
 %%
 %%% Load the uhthesis2e document class
-\documentclass[11pt]{uhthesis}
+\documentclass[11pt]{article}
 
 %%% Load some useful packages:
 %% New LaTeX2e graphics support
@@ -65,43 +65,12 @@
 \title{Open Power Quality Pilot Program}
 %% Your name, capitalized normally. Do not include any titles like Dr.
 \author{Sergey Negrashov}
-%% Month in which you intend to receive your degree (i.e. graduation).
-%% Presumably this will be one of: May, August, or December.
-\degreemonth{November }
-%% Year of expected graduation.
-\degreeyear{2014}
-%% Type of degree to be conferred.
-\degree{Master of Science}
-%% This is the chairperson of your committee. Do not use titles like Dr.
-\chair{Philip Johnson}
-%% The other members of your committee, seperated by "\\". Again, no titles,
-%% and it is customary to list the outside committee member (if you have one)
-%% last.
 
-%% This is the total size of your committee, including the chairperson. The
-%% signature page routine will only handle up to 6 members; if you have more
-%% than that you will need to modify the document class.
-\numberofmembers{1}
-%% The field in which you are obtaining your degree, capitalized normally.
-\field{Information and Computer Sciences}
-%\subfield{Bioinformatics}
-%% The version number of your document. Consistent use of this will enable you
-%% to tell old drafts from new ones. Final actual documents omit this
-%% automatically so you can use it without fear of submission problems at the
-%% end. If you do not define this parameter, it defaults to "1.0.0".
-\versionnum{0.0.1}
 
 %%% End of preamble
 \begin{document}
 \maketitle
 
-\begin{frontmatter}
-
-%%% Create the signature page (when indicated by the options)
-\signaturepage
-
-%%% Create the copyright page
-\copyrightpage
 
 %%% Bring in the abstract section from external file
 \include{abstract}
@@ -112,7 +81,6 @@
 %%% Generate list of figures
 \listoffigures
 
-\end{frontmatter}
 
 %\normalsize
 %%% Bring in the body of the thesis from external file
