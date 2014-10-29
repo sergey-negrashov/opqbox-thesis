@@ -204,11 +204,28 @@ of such a feature rich, scalable architecture is beyond the scope of this paper.
 
 \section{Results}
 
-In this section we discuss the preliminary results of  OPQBox deployment. First we attempt to correlate the voltage trends to the output of a PV installation. Next we take a look at the 
-waveform of an event recorder on two geographical separated devices.
+In this section we discuss the preliminary results of  OPQBox deployment. First we present the daily trends seen by our network. Next we correlate the voltage trends to the output
+of a PV installation. Finally we take a look at an event recorder on two geographical separated devices.
 
+\subsection{Daily Trends}
+
+Using our power quality sensor network, we are able to monitor daily trends throughout the grid. Figure \ref{fig:trends} shows a typical daily trend for three devices. This data was 
+collected over Oct 26. The CSDL device was located in the Collaborative Software Development Lab at the University of Hawaii. Justin device was located in the high-rise apartment, near
+downtown Honolulu. Finally Philip devise is located in a residential house, with a rooftop PV installation in Manoa valley.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=\textwidth]{img/1Day.eps}
+\caption{Voltage and frequency readings for three devices over Oct 26.}
+\label{fig:trends}
+\end{figure}
+
+The frequency measurements track each other throughout the day. This is to be expected since the grid frequency is set by a few central generators. Voltage data recorded by the CSDL and 
+Justin, show the same behavior throughout the day, however local voltage disturbances dominate the short term trends. In case of device Philip however a daily voltage fluctuation of $~10V_{rms}$
+was present daily. We attempt to explain this phenomenon by correlating the voltage reading to the PV activity in the section \ref{sub:PV}.
 \subsection{Grid Voltage and Grid Tied Photovoltaic Installations}
-Top graph in figure \ref{fig:samehouse} shows the rms voltage recorded from August 1 to August 8 for a single device in a residential home. The bottom plot shows the power produced by 
+\label{sub:PV}
+Top graph in figure \ref{fig:samehouse} shows the rms voltage recorded from August 1 to August 8 for a single device in a residential home in Kailua, Oahu. The bottom plot shows the power produced by 
 a grid tied PV installation, located on the roof of the same house.
 
 \begin{figure}[h!]
@@ -274,11 +291,47 @@ around the event time as shown in figure \ref{fig:trends}.
 \end{figure} 
 
 Figure \ref{fig:trends} shows that while the voltage dip quickly recovered, frequency variations continued for several minutes. While the cause of this particular disruption will likely remain
-unknown, events such as this prove both the feasibility and the need for deployment of a power quality monitoring system such
-as OPQBox and OPQHub.
-
-
+unknown, events such as this prove both the feasibility and the need for deployment of a power quality monitoring system such as OPQBox and OPQHub.
 
 \section{Further Study}\label{chap:further}
-	
+
+During the initial deployment of the OPQBox1 and OPQHub several problems have been discovered. In order to overcome these changes the next iteration of OPQbox is in active development.
+The list of proposed  changes is shown Table \ref{tbl:comp}. 
+
+\begin{table}[h!]
+\caption{Comparison of OPQBox1 and OPQBox2}
+\label{tbl:comp}
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Feature}        & \textbf{OPQBox1}               & \textbf{OPQBox2}                     \\ \hline
+Synchronization         & NTP/Software sampling    & NTP/Hardware sampling         				 	\\ \hline
+Sampling rate           & 4kSps                 & Up to 50kSps Nominal 15.36kSps 					\\ \hline
+Voltage sensing method  & Wall Wart transformer & Resistor Divider            					\\ \hline
+Power Fault Handling    & NONE                  & FRAM waveform storage       					\\ \hline
+Communication Capabiliy & UART                  & UART/SPI/USB/$I^2C$               					\\ \hline
+On board processing     & NONE					& ARM CPU with FPU								\\ \hline
+\end{tabular}
+\end{table}
+
+On board processing for OPQBox1 was performed by the Raspberry PI SBC. Raspberry PI was an attractive option, due to the wide range of interfaces, ample processing power and small
+footprint. However due to the limitations imposed by the non-realtime nature of Linux, it became impossible to grantee consistent timing between devices. Even with perfectly syncronized
+clocks, the rms jitter of up to 50ms was observed between window samples. Next generation of the device is based around a dedicated 32bit ARM MCU. This MCU is responsible for controlling
+the sampling rate of the device, and since this process is interrupt driven, the scheduler jitter will be eliminated. Furthermore the MCU is responsible implementing running a 
+phase locked loop such that a first and last sample of a grid cycle fall on the zero crossing. This will simplify the analysis and improve synchronization between devices.
+
+Due to the window size used in OPQbox1 made it almost impossible to detect short lived transients. In order to improve transient detection, OPQBox2 will analyze the input one grid cycle 
+at a time, thereby shrinking the window from 1s to 16ms. This will require a new algorithm for frequency extraction, however since OPQBox2 includes a dedicated CPU/FPU this analysis will be performed by the realtime controller. Fitting is being considered as an algorithm of choice, since it will provide phase, amplitude and fundamental frequency information.
+
+Sampling rate increase in OPQBox2 is dictated by the IEEE Std 1159. This standard recommends the minimum 256 points per grid cycle, or a sampling rate of 15.36kSps. In order to accomplish this
+the MSP430AFE is replaced by a dedicated 50kSps ADC. However during our calibration of the OPQBox1 we found that the wall-wart transformers used in sampling had on average 3kHz of bandwidth.
+In order to catch short lived transients and justify the high sampling rate, the transformer was removed from the OPQBox2 design. Instead voltage scening is performed via a simple resistor
+divider, and an isolation amplifier. OPQBox2 leaves a large margin of conversion rate for future applications, and sampling rate of 800 samples per grid cycle can be achieved if required.
+
+During development of OPQBox1 we focused on UART as primary method of communication with the outside world. Raspberry Pi provided all the processing and WIFI for communication. OPQBox2 on the other hand provides several possible interfaces, and since the processing is performed on the device, any communication controller compatible with the SPI UART or $I^2C$
+can be employed. This allows us to tailor OPQBox2 to operate independent of the communication interface, thus allowing us to monitor power quality in locations inaccessible to WIFI.
+
+Power outages have not been considered in the design of OPQBox1. Since data leading up to the power outage can provide insight into the nature and the cause of the fault OPQBox2 was
+designed to handle outages. Battery and supercapacitor have been considered during the design stage, however they added bulk and did not necessarily preserve the data during a long term power failure. Instead OPQBox2 design uses ferromagnetic RAM to buffer most 30 grid cycles of high resolution waveforms. Since FRAM maintains it state during a power interruption, 
+OPQBox2 is able to provide 500ms worth of high resolution voltage waveforms leading up to the outage.
+
 \section{Conclusions}
