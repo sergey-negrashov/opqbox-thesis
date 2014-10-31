@@ -50,14 +50,41 @@
 %%                   version number is always printed, and the signature page
 %%                   is omitted.
 %%
-%%% Load the uhthesis2e document class
 \documentclass[11pt]{article}
+\usepackage[final]{graphicx}
+\usepackage{times}
 
-%%% Load some useful packages:
-%% New LaTeX2e graphics support
-\usepackage{graphicx}
-%% Package to linebreak URLs in a sane manner.
+%% Make subsubsections numbered and included in ToC
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{3}
+
+%% URLs
 \usepackage{url}
+\usepackage[colorlinks, bookmarks=true]{hyperref}
+
+%% Define a new 'smallurl' style for the package that will use a smaller font.
+\makeatletter
+\def\url@smallurlstyle{%
+  \@ifundefined{selectfont}{\def\UrlFont{\sf}}{\def\UrlFont{\small\ttfamily}}}
+\makeatother
+%% Now actually use the newly defined style.
+\urlstyle{smallurl}
+
+%% CO2 
+\usepackage{xspace}
+\newcommand{\COtwo}{CO\ensuremath{_2}\xspace}
+
+%% Make margins less ridiculous
+\usepackage{fullpage}
+
+\usepackage{floatflt}
+\usepackage{wrapfig}
+
+%% Since I'm using the LaTeX Makefile that uses dvips, I need this
+%% package to make URLs break nicely
+\usepackage{breakurl}
+
+\usepackage{graphicx}
 
 %%% Declarations for Front Matter. Capitalize all of these values
 %%% "normally". This allows the document class to format them properly.
@@ -96,10 +123,10 @@
 \nocite{*}
 
 %%% Input file for bibliography
-%\bibliography{uhtest}
+\bibliography{thesis}
 %% Use this for an alphabetically organized bibliography
-%\bibliographystyle{plain}
-%% Use this for a reference order organized bibliography
+\bibliographystyle{plain}
+% Use this for a reference order organized bibliography
 %\bibliographystyle{unsrt}
 
 \end{document}
