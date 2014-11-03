@@ -51,22 +51,21 @@ a heating coil, such as a water heater or even an electric kettle, can cause a v
 can cause a large transient due to the inrush current requirements. By having several units connected under the same substation it is possible to filter the noise generated
 by the regular activities of a consumer, and evaluate the overall grid status instead.
 
-\item \textbf{Synchronization.} Temporal synchronization is required to separate local events from grid wide disturbances.  NTP and GPS are common choices for sensor network synchronization. 
+\item \textbf{Synchronization.} Temporal synchronization is required to separate local events from grid wide disturbances.  NTP and GPS are common choices for sensor network synchronization. IEEE Std 1159 requires 20ms uncertainty in the measurement time.\cite{ieee_pq}
 
 \end{itemize}
 
-Devices that measure power quality are known as power quality meters. These devices monitor the voltage and sometimes current provided by the grid, and analyze it according to common power quality metrics. Most publicly available power quality meters fall into two categories:
+\section{Related Work}
 
-\begin{itemize}
-\item Professional grade such as National Instruments\textregistered 862001. \cite{NI-device} These devices are generally used by the utility companies, and power system engineers. They combine high accuracy measurement electronics, with fast digital signal processors in order to provide detection and classification of power quality events.These devices allow for unparalleled connectivity from WIFI, to CAN bus, and power line communications.  Unfortunately the cost of these meters prohibits their use in a distributed grid study where several dozen, or even hundreds of devices are required.
-\item Consumer grade such as AC Scout\textregistered. \cite{ACScout} These devices are simple voltage line monitors. They provide adequate power quality measurements to give homeowners insight into the state of their electrical wiring and the health of the grid as a whole. Unfortunately these devices leave much to be desired when it comes to communication. Generally they offer no connectivity beyond external storage. This makes them unattractive for a distributed real-time monitoring systems.
-\end{itemize}
+Devices that measure power quality are known as power quality meters. These devices monitor voltage and/or current at their location in the power-grid, providing power quality analytics to the operator. Test and measurement equipment such as National Instruments\textregistered 862001 \cite{NI_Instrument} are the best tools available for this job. They combine high accuracy measurement electronics, with fast digital signal processors in order to provide detection and classification of power quality events.These devices allow for unparalleled connectivity from WIFI, to CAN bus, and power line communications. Unfortunately the cost of these meters prohibits their use in a distributed grid study where several dozen, or even hundreds of devices are required. Instead they commonly used by the utility companies, and power system engineers. Consumer grade devices such as AC Scout\textregistered provide adequate power quality measurements to give homeowners insight into the state of their electrical wiring and the health of the grid as a whole.\cite{ac_scout} Unfortunately these devices leave much to be desired when it comes to communication. Generally they offer no connectivity beyond external storage. This makes them unattractive for a distributed real-time monitoring systems.
 
-Several power quality meters designed for distributed monitoring exist in academic and industrial installations.\cite{fnet_main} Unfortunately these devices are not available for purchase, and some require an NDA to obtain.
+Several power quality meters designed for distributed monitoring exist in academic and industrial installations. FNET project developed a frequency monitoring network with 80 nodes providing data from around the world.\cite{fnet_main} This system has been designed to study the effects of large grid faults such as generator trips, as they propagate through the national grid.\cite{fnet_2} However FNET system was not developed to measure power quality, where a high penetration of devices is required. High unit cost of \$1000 per unit and  scalability issues make FNET devices and software unsuitable for a grid study undertaken by OPQ.
+
+Power Standards Lab(PSL) maintains a power quality monitoring network using the in-house developed PQUBE power quality meter.\cite{pqube} PSL is responsible for much of the development of the power quality standard, and PQUBE devices are a golden standard in the power quality measurements.  PSL also maintains a public power quality page with data available from 50 devices worldwide. Unfortunately PQUBE devices have two traits that make them unattractive for our study. Firstly these devices must be installed into an electrical box or a distribution panel by an qualified electrician. Secondly these device can cost upwards of \$10000 a unit.
 
 \section{OPQ: cloud based power quality monitoring network.}
 
-Over the last nine months, the Open Power Quality project \cite{OPQ} has developed an in-house prototype power quality meter (OPQBox \cite{OPQBox1Repository}) with wifi/ethernet connectivity that is suitable for wide-scale deployment. Furthermore, we developed a cloud based aggregation system (OPQhub \cite{OPQHubRepository}) designed for aggregating, analyzing, and displaying grid status. Over the last three months we have collected $V_{rms}$ and $f_{utility}$ data across five different locations as part of a pilot study for a larger deployment. This section describes the design of the power quality meter OPQBox1.
+Over the last nine months, the Open Power Quality project \cite{OPQ} has developed an in-house prototype power quality meter (OPQBox \cite{OPQBox1Repository}) with wifi/ethernet connectivity that is suitable for wide-scale deployment. Furthermore, we developed a cloud based aggregation system (OPQhub \cite{OPQHubRepository}) designed for aggregating, analyzing, and displaying grid status. Over the last three months we have collected $V_{rms}$ and $f_{utility}$ data across five different locations as part of a pilot study for a larger deployment. This Section describes the design of the power quality meter OPQBox1.
 
 \subsection{OPQBox1: A Prototype Power Quality Monitor.}
 
@@ -97,7 +96,7 @@ In order to measure the line voltage, it must first be scaled down to the ADC in
 \caption{MSP430 State Machine}
 \end{figure}
 
-The ADC is operating in free-running mode, meaning that the conversion timing is controlled via hardware. Once the conversion is complete, a system interrupt notifies the CPU. In order to remove the hard real-time constraint for the Raspberry PI, the MSP430 CPU stores the ADC readings in an 85 sample FIFO. This FIFO, implemented as a circular buffer,  allows the Raspberry PI to receive data at non-regular intervals. This is important since the Raspberry PI is running a non real-time operating system. If the FIFO is full, the oldest sample is dropped from FIFO. Unfortunately there is no mechanism to inform the Raspberry PI of an overflow in OPQBox1. This will be remedied in the next generation design of the meter. See section \ref{chap:further} for more details on the next generation device design.
+The ADC is operating in free-running mode, meaning that the conversion timing is controlled via hardware. Once the conversion is complete, a system interrupt notifies the CPU. In order to remove the hard real-time constraint for the Raspberry PI, the MSP430 CPU stores the ADC readings in an 85 sample FIFO. This FIFO, implemented as a circular buffer,  allows the Raspberry PI to receive data at non-regular intervals. This is important since the Raspberry PI is running a non real-time operating system. If the FIFO is full, the oldest sample is dropped from FIFO. Unfortunately there is no mechanism to inform the Raspberry PI of an overflow in OPQBox1. This will be remedied in the next generation design of the meter. See Section \ref{chap:further} for more details on the next generation device design.
 
 Communication between the Raspberry PI and the MSP430AFE is performed via UART with the addition of a WR line. When the WR line is pulled low, a level triggered interrupt notifies the MSP430 CPU that the PI is ready for more data. The data is transfered via UART running at 230400bps.
 
@@ -113,7 +112,7 @@ The Raspberry PI is responsible for selecting events which deviate from the stea
 \item Communication.
 \end{enumerate}
 
-The acquisition step accumulates a 4000 sample window, and passes it on for processing. In order to align the data during aggregation, the Raspberry PI generates a time-stamp for each window. Next, the fundamental frequency of the waveform is computed. In order to do that, a Fourier transform of the sample window is performed. Six points surrounding the largest FFT peak are selected, and fitted with a Gaussian in order to extract the true utility frequency as shown in figure \ref{fig:fit}. Finally,  $V_{rms}$ is computed for each window according to the equation \ref{eq:rms}.  Only complete half-periods are included in $V_{rms}$ calculation, and the leading and trailing samples are pruned. 
+The acquisition step accumulates a 4000 sample window, and passes it on for processing. In order to align the data during aggregation, the Raspberry PI generates a time-stamp for each window. Next, the fundamental frequency of the waveform is computed. In order to do that, a Fourier transform of the sample window is performed. Six points surrounding the largest FFT peak are selected, and fitted with a Gaussian in order to extract the true utility frequency as shown in Figure \ref{fig:fit}. Finally,  $V_{rms}$ is computed for each window according to the equation \ref{eq:rms}.  Only complete half-periods are included in $V_{rms}$ calculation, and the leading and trailing samples are pruned. 
 
 \begin{figure}[h!]
 \begin{center}
@@ -137,12 +136,19 @@ Every window recorded passes through the first three steps in OPQBox1 analysis s
 The windows selected by the filter task are considered events and are prepared to be sent to the aggregation service via a WIFI dongle. The window is serialized into JSON, along with the appropriate metadata, and sent over a websocket connection to the aggregation server. Additionally, the OPQBox1 sends a measurement packet every 15 seconds. This packet does not contain the raw waveform, instead sending only the utility frequency, $V_{rms}$ and a timestamp of a window. This allows us to monitor the voltage and frequency trends even during the normal power grid conditions. 
 
 \subsection{Aggregation Infrastructure}
-The Open Power Quality aggregation software, titled OPQHub, is responsible for communicating with the OPQBox devices, and serving user side content. It is written in Java using the Play framework. OPQHub provides a rich visualization suite, along with a data querying API for developers. The description of OPQHub is beyond the scope of this paper. A white paper on this topic has been previously published by OPQ.\ref{tony}
+The Open Power Quality aggregation software, titled OPQHub, is responsible for communicating with the OPQBox devices, and serving user side content. It is written in Java using the Play framework. OPQHub provides a rich visualization suite, along with a data querying API for developers. The description of OPQHub is beyond the scope of this paper. A white paper on this topic has been previously published by OPQ.\cite{tony}
 
 \section{Results}
 
-In this section we discuss the preliminary results of  OPQBox deployment. First we present the daily trends seen by our network. Next we correlate the voltage trends to the output
+In this Section we discuss the preliminary results of  OPQBox deployment. First we present the daily trends seen by our network. Next we correlate the voltage trends to the output
 of a PV installation. Finally we take a look at an event recorder on two geographically separated devices.
+
+\begin{figure}[h!]
+\centering
+\includegraphics[width=\textwidth]{img/1Day.eps}
+\caption{Voltage and frequency readings for three devices over Oct 26.}
+\label{fig:trends}
+\end{figure}
 
 \subsection{Daily Trends}
 
@@ -150,16 +156,8 @@ Using our power quality sensor network, we are able to monitor daily trends thro
 collected on Oct 26. The ``CSDL'' device was located in the Collaborative Software Development Lab at the University of Hawaii. The ``Justin'' device was located in the high-rise apartment, near
 downtown Honolulu. Finally, the ``Philip'' device is located in a residential home with a rooftop PV installation in Kailua.
 
-\newpage
-\begin{figure}[h!]
-\centering
-\includegraphics[width=\textwidth]{img/1Day.eps}
-\caption{Voltage and frequency readings for three devices over Oct 26.}
-\label{fig:trends}
-\end{figure}
-\newpage
 
-The frequency measurements track each other throughout the day. This is to be expected since grid frequency is set by a few central generators. Voltage data recorded by the CSDL and  Justin devices show the same behavior throughout the day, however local voltage disturbances dominate the short term trends. In the case of the Philip device, however, a daily voltage fluctuation of $~10V_{rms}$ was observed daily. We attempt to explain this phenomenon by correlating the voltage reading to PV activity in the section \ref{sub:PV}.
+The frequency measurements track each other throughout the day. This is to be expected since grid frequency is set by a few central generators. Voltage data recorded by the CSDL and  Justin devices show the same behavior throughout the day, however local voltage disturbances dominate the short term trends. In the case of the Philip device, however, a daily voltage fluctuation of $~10V_{rms}$ was observed daily. We attempt to explain this phenomenon by correlating the voltage reading to PV activity in the Section \ref{sub:PV}.
 
 \subsection{Grid Voltage and Grid Tied Photovoltaic Installations}
 \label{sub:PV}
@@ -187,7 +185,7 @@ variation of the line voltage of the house they are supplying. This effect has b
 Figure 3.2 shows the same graphs as Figure \ref{fig:samehouse} for October 15 to October 18. This time, however, the OPQBox1 device and the PV unit are separated by 20 miles. The house containing the OPQBox1 did not have a grid tied PV system. Correlations are present nonetheless; the line voltage measured by the device is proportional to the power generated by the PV installation. A possible explanation for this effect is that PV installations affect the line voltage across the whole grid. Oct 15-17 were clear days with minimal cloud cover, which implied that PV installations were generating power across the island, perhaps affecting the grid voltage while doing so. One way to answer this question is examine the line voltage trend while the PV installations
 across the island are idle. 
 
-On the days of October 17 through October 19, Hurricane Ana passed within 100 miles of the island of Oahu. Its passing brought heavy clouds which enveloped the entire island. Clouds began to form late afternoon Friday, October 18, as demonstrated by the power generation drop in figure \ref{fig:diffhouse} along with the line voltage drop recorded by the device. Voltage and Power readings for October 18 through October 20 are shown in figure \ref{fig:storm}.
+On the days of October 17 through October 19, Hurricane Ana passed within 100 miles of the island of Oahu. Its passing brought heavy clouds which enveloped the entire island. Clouds began to form late afternoon Friday, October 18, as demonstrated by the power generation drop in Figure \ref{fig:diffhouse} along with the line voltage drop recorded by the device. Voltage and Power readings for October 18 through October 20 are shown in Figure \ref{fig:storm}.
 
 \begin{figure}[h!]
 \centering
@@ -196,7 +194,7 @@ On the days of October 17 through October 19, Hurricane Ana passed within 100 mi
 \label{fig:storm}
 \end{figure} 
 
-As shown in Figure \ref{fig:diffhouse}, during peak hours, the PV installation was generating 2kW of power, yet during the storm on October 18 and 19 it was generating 550W and 100W respectively. Furthermore the line voltage did not exhibit the same variations we saw in figure \ref{fig:samehouse} and figure \ref{fig:diffhouse}. While more research is required, the data we collected over the last several months provides some evidence that the high penetration of PV installations on Oahu affects grid voltage. 
+As shown in Figure \ref{fig:diffhouse}, during peak hours, the PV installation was generating 2kW of power, yet during the storm on October 18 and 19 it was generating 550W and 100W respectively. Furthermore the line voltage did not exhibit the same variations we saw in Figure \ref{fig:samehouse} and Figure \ref{fig:diffhouse}. While more research is required, the data we collected over the last several months provides some evidence that the high penetration of PV installations on Oahu affects grid voltage. 
 
 \subsection{Grid Wide Events}
 
@@ -207,7 +205,7 @@ As shown in Figure \ref{fig:diffhouse}, during peak hours, the PV installation w
 \label{fig:grid}
 \end{figure} 
 
-As described in Subsection 2.3, our system is able record both long term trends, and short term transients. Unfortunately only several of such transients have been confirmed to be grid wide. An example of such an event is shown in figure 3.4.
+As described in Subsection 2.3, our system is able record both long term trends, and short term transients. Unfortunately only several of such transients have been confirmed to be grid wide. An example of such an event is shown in Figure \ref{fig:grid}
 
 \begin{figure}[h!]
 \centering
@@ -215,9 +213,9 @@ As described in Subsection 2.3, our system is able record both long term trends,
 \caption{Voltage and frequency trend for the event shown in Figure \ref{fig:grid}.}
 \label{fig:daytrends}
 \end{figure} 
-The event above is two voltage sags lasting 6 cycles, separated by ~700ms. It was seen by two devices, one located at University of Hawaii at Manoa, and the other 10 miles away in a high rise apartment building. The timestamp between the two waveforms differed by 18ms, or approximately one grid cycle. Using the data we collected we are able to examine the the voltage and frequency trend around the event time as shown in figure \ref{fig:trends}.
+The event above is two voltage sags lasting 6 cycles, separated by ~700ms. It was seen by two devices, one located at University of Hawaii at Manoa, and the other 10 miles away in a high rise apartment building. The timestamp between the two waveforms differed by 18ms, or approximately one grid cycle. Using the data we collected we are able to examine the the voltage and frequency trend around the event time as shown in Figure \ref{fig:trends}.
 
-Figure \ref{fig:daytrends} shows that while the voltage dip quickly recovered, frequency variations continued for several minutes. While the cause of this particular disruption will likely remain unknown, events such as this prove both the feasibility and the need for deployment of a power quality monitoring system such as OPQBox1 and OPQHub. We have shown in section \ref{sub:PV} that power quality is subject to environmental factors. As our technology matures, the detection, clustering, classification and analysis of grid-wide events will allow us to further correlate power quality disturbances to environmental data. This may in term support new forms of prediction and control.
+Figure \ref{fig:daytrends} shows that while the voltage dip quickly recovered, frequency variations continued for several minutes. While the cause of this particular disruption will likely remain unknown, events such as this prove both the feasibility and the need for deployment of a power quality monitoring system such as OPQBox1 and OPQHub. We have shown in Section \ref{sub:PV} that power quality is subject to environmental factors. As our technology matures, the detection, clustering, classification and analysis of grid-wide events will allow us to further correlate power quality disturbances to environmental data. This may in term support new forms of prediction and control.
 
 
 \section{OPQBox2}\label{chap:further}
